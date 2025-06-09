@@ -104,7 +104,7 @@ fn main() {
     }
 
     // now we output to a file called combined_<file>
-    let output_file = std::fs::File::create(format!("combined_{}", file))
+    let output_file = std::fs::File::create(dir.join(format!("combined_{}", file)))
         .unwrap_or_else(|_| panic!("Failed to create output file 'combined_{}'", file));
     println!("Writing to combined_{}", file);
     let mut writer = std::io::BufWriter::new(output_file);
