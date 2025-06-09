@@ -36,8 +36,8 @@ fn main() {
         }
     }
     dirs.sort();
-    cols.insert(0, "key".to_string());
     cols.sort();
+    cols.insert(0, "key".to_string());
 
     if dirs.is_empty() {
         eprintln!(
