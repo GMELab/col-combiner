@@ -113,7 +113,18 @@ fn main() {
     }
     writeln!(writer).expect("Failed to write header to output file");
     let mut output = output.into_iter().collect::<Vec<_>>();
-    output.sort_by(|(ka, _), (kb, _)| ka.cmp(kb));
+    if output[0].0.parse::<isize>().is_err() {
+        output.sort_by(|(ka, _), (kb, _)| ka.cmp(kb));
+    } else {
+        output.sort_by(|(ka, _), (kb, _)| {
+            ka.parse::<isize>()
+                .unwrap_or_else(|_| panic!("Failed to parse key '{}'", ka))
+                .cmp(
+                    &kb.parse::<isize>()
+                        .unwrap_or_else(|_| panic!("Failed to parse key '{}'", kb)),
+                )
+        });
+    }
     for (key, values) in output {
         writeln!(
             writer,
