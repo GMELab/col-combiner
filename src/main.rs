@@ -26,7 +26,6 @@ fn main() {
     }
 
     let mut cols = Vec::new();
-    cols.push("key".to_string());
     let mut dirs = Vec::new();
     for entry in dir.read_dir().expect("Failed to read directory") {
         let entry = entry.expect("Failed to read entry");
@@ -37,6 +36,7 @@ fn main() {
         }
     }
     dirs.sort();
+    cols.insert(0, "key".to_string());
     cols.sort();
 
     if dirs.is_empty() {
