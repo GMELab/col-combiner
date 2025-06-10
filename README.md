@@ -21,8 +21,8 @@ cargo install --git https://github.com/GMELab/col-combiner
 ## Usage
 
 ```bash 
-col-combiner --file <file> --dir <dir> # if dir is not specified, the current directory is used
+col-combiner <file> [--dir <dir>] # if dir is not specified, the current directory is used
 # For example
-col-combiner --file example.txt --dir example_dir
+col-combiner example.txt --dir example_dir
 # now we get a file called in example_dir called combined_example.txt
 ```

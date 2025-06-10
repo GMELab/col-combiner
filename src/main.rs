@@ -6,7 +6,6 @@ use clap::Parser;
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// Name of the file to combine in child directories
-    #[arg(short, long)]
     pub file: String,
     /// Directory to search for subdirectories in.
     #[arg(short, long)]
@@ -55,8 +54,18 @@ fn main() {
 
         println!("Processing file: {}", file_path.display());
 
-        let content = std::fs::read_to_string(&file_path)
+        let mut content = std::fs::read_to_string(&file_path)
             .unwrap_or_else(|_| panic!("Failed to read file '{}'", file_path.display()));
+
+        let lines_count = content.lines().count();
+        if lines_count == 1 {
+            println!(
+                "Warning: File '{}' has only one line, converting to single-column format",
+                file_path.display()
+            );
+            // If the file has only one line, we treat it as a single-column file
+            content = content.trim().split('\t').collect::<Vec<_>>().join("\n");
+        }
 
         for (j, line) in content.lines().enumerate() {
             let trimmed = line.trim();
