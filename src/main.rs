@@ -6,17 +6,21 @@ use clap::Parser;
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// Name of the file to combine in child directories
-    pub file:    String,
+    pub file:       String,
     /// Directory to search for subdirectories in.
     #[arg(short, long)]
-    pub dir:     Option<String>,
-    /// Don't sort the output by key
+    pub dir:        Option<String>,
+    /// Don't sort the output by key, just keep the order of insertion.
     #[arg(long, default_value_t = false)]
-    pub no_sort: bool,
+    pub keep_order: bool,
 }
 
 fn main() {
-    let Args { file, dir, no_sort } = Args::parse();
+    let Args {
+        file,
+        dir,
+        keep_order,
+    } = Args::parse();
     let dir = match dir {
         Some(d) => PathBuf::from(d),
         None => std::env::current_dir().expect("Failed to get current directory"),
@@ -50,6 +54,7 @@ fn main() {
     }
 
     let mut output = HashMap::<String, Vec<isize>>::new();
+    let mut insertion_order = Vec::new();
 
     for i in 0..dirs.len() {
         let subdir = &dirs[i];
@@ -84,6 +89,7 @@ fn main() {
                     },
                     None => {
                         output.insert(j.to_string(), vec![0; dirs.len()]);
+                        insertion_order.push(j.to_string());
                         output.get_mut(&j.to_string()).unwrap()[i] =
                             parts[0].parse::<isize>().unwrap_or_else(|_| {
                                 eprintln!("Error: Invalid number in line '{}'", line);
@@ -101,6 +107,7 @@ fn main() {
                     },
                     None => {
                         output.insert(parts[0].to_string(), vec![0; dirs.len()]);
+                        insertion_order.push(parts[0].to_string());
                         output.get_mut(parts[0]).unwrap()[i] =
                             parts[1].parse::<isize>().unwrap_or_else(|_| {
                                 eprintln!("Error: Invalid number in line '{}'", line);
@@ -125,19 +132,30 @@ fn main() {
     }
     writeln!(writer).expect("Failed to write header to output file");
     let mut output = output.into_iter().collect::<Vec<_>>();
-    if !no_sort {
-        if output[0].0.parse::<isize>().is_err() {
-            output.sort_by(|(ka, _), (kb, _)| ka.cmp(kb));
-        } else {
-            output.sort_by(|(ka, _), (kb, _)| {
-                ka.parse::<isize>()
-                    .unwrap_or_else(|_| panic!("Failed to parse key '{}'", ka))
-                    .cmp(
-                        &kb.parse::<isize>()
-                            .unwrap_or_else(|_| panic!("Failed to parse key '{}'", kb)),
-                    )
-            });
-        }
+    if keep_order {
+        output.sort_by(|(ka, _), (kb, _)| {
+            insertion_order
+                .iter()
+                .position(|k| k == ka)
+                .unwrap_or(usize::MAX)
+                .cmp(
+                    &insertion_order
+                        .iter()
+                        .position(|k| k == kb)
+                        .unwrap_or(usize::MAX),
+                )
+        });
+    } else if output[0].0.parse::<isize>().is_err() {
+        output.sort_by(|(ka, _), (kb, _)| ka.cmp(kb));
+    } else {
+        output.sort_by(|(ka, _), (kb, _)| {
+            ka.parse::<isize>()
+                .unwrap_or_else(|_| panic!("Failed to parse key '{}'", ka))
+                .cmp(
+                    &kb.parse::<isize>()
+                        .unwrap_or_else(|_| panic!("Failed to parse key '{}'", kb)),
+                )
+        });
     }
     for (key, values) in output {
         writeln!(
