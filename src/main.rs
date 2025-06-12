@@ -11,7 +11,7 @@ pub struct Args {
     #[arg(short, long)]
     pub dir:     Option<String>,
     /// Don't sort the output by key
-    #[arg(short, long, default_value_t = false)]
+    #[arg(long, default_value_t = false)]
     pub no_sort: bool,
 }
 
