@@ -6,14 +6,17 @@ use clap::Parser;
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// Name of the file to combine in child directories
-    pub file: String,
+    pub file:    String,
     /// Directory to search for subdirectories in.
     #[arg(short, long)]
-    pub dir:  Option<String>,
+    pub dir:     Option<String>,
+    /// Don't sort the output by key
+    #[arg(short, long, default_value_t = false)]
+    pub no_sort: bool,
 }
 
 fn main() {
-    let Args { file, dir } = Args::parse();
+    let Args { file, dir, no_sort } = Args::parse();
     let dir = match dir {
         Some(d) => PathBuf::from(d),
         None => std::env::current_dir().expect("Failed to get current directory"),
@@ -122,17 +125,19 @@ fn main() {
     }
     writeln!(writer).expect("Failed to write header to output file");
     let mut output = output.into_iter().collect::<Vec<_>>();
-    if output[0].0.parse::<isize>().is_err() {
-        output.sort_by(|(ka, _), (kb, _)| ka.cmp(kb));
-    } else {
-        output.sort_by(|(ka, _), (kb, _)| {
-            ka.parse::<isize>()
-                .unwrap_or_else(|_| panic!("Failed to parse key '{}'", ka))
-                .cmp(
-                    &kb.parse::<isize>()
-                        .unwrap_or_else(|_| panic!("Failed to parse key '{}'", kb)),
-                )
-        });
+    if !no_sort {
+        if output[0].0.parse::<isize>().is_err() {
+            output.sort_by(|(ka, _), (kb, _)| ka.cmp(kb));
+        } else {
+            output.sort_by(|(ka, _), (kb, _)| {
+                ka.parse::<isize>()
+                    .unwrap_or_else(|_| panic!("Failed to parse key '{}'", ka))
+                    .cmp(
+                        &kb.parse::<isize>()
+                            .unwrap_or_else(|_| panic!("Failed to parse key '{}'", kb)),
+                    )
+            });
+        }
     }
     for (key, values) in output {
         writeln!(
